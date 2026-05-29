@@ -34,12 +34,20 @@ def build_item_content_features(anime: pd.DataFrame, item_map: dict) -> np.ndarr
 
     # --- Genre: multi-hot ---
     # Each anime can have multiple genres (comma-separated).
-    # We create one binary column per genre.
-    all_genres = sorted(
-        set(g.strip() for genres in anime["genre"].dropna() for g in genres.split(","))
+    # We explode the genre column into one row per genre, encode with get_dummies,
+    # then sum back to the anime level — one O(n) pass instead of O(n × |genres|)
+    # per-genre str.contains scans.
+    genre_dummies = (
+        anime[["anime_id", "genre"]]
+        .assign(genre=anime["genre"].str.split(", "))
+        .explode("genre")
+        .assign(genre=lambda d: d["genre"].str.strip())
     )
-    for genre in all_genres:
-        anime[f"genre_{genre}"] = anime["genre"].str.contains(genre, regex=False).astype(float)
+    genre_dummies = pd.get_dummies(genre_dummies.set_index("anime_id")["genre"]).groupby(level=0).max()
+    genre_dummies.columns = [f"genre_{g}" for g in genre_dummies.columns]
+    all_genres = sorted(genre_dummies.columns.str.replace("genre_", "", regex=False))
+    genre_dummies = genre_dummies[[f"genre_{g}" for g in all_genres]].astype(float)
+    anime = anime.set_index("anime_id").join(genre_dummies, how="left").reset_index()
 
     # --- Type: one-hot ---
     type_dummies = pd.get_dummies(anime["type"], prefix="type").astype(float)
@@ -47,14 +55,20 @@ def build_item_content_features(anime: pd.DataFrame, item_map: dict) -> np.ndarr
 
     # --- Numeric features: log-scale then normalise to [0, 1] ---
     # Log-scale tames the huge range in episodes (1–1818) and members (5–1M).
-    scaler = MinMaxScaler()
-    anime["feat_episodes"] = scaler.fit_transform(
+    # Each feature gets its own scaler instance so the fitted min/max for
+    # episodes, rating, and members are all preserved independently. A single
+    # reused scaler would overwrite its state on each fit_transform call,
+    # leaving only the last column's range — wrong scaling at inference time.
+    ep_scaler  = MinMaxScaler()
+    rat_scaler = MinMaxScaler()
+    mem_scaler = MinMaxScaler()
+    anime["feat_episodes"] = ep_scaler.fit_transform(
         np.log1p(anime["episodes"].values).reshape(-1, 1)
     )
-    anime["feat_rating"] = scaler.fit_transform(
+    anime["feat_rating"] = rat_scaler.fit_transform(
         anime["rating"].values.reshape(-1, 1)
     )
-    anime["feat_members"] = scaler.fit_transform(
+    anime["feat_members"] = mem_scaler.fit_transform(
         np.log1p(anime["members"].values).reshape(-1, 1)
     )
 
