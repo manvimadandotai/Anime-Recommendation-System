@@ -1,21 +1,27 @@
 # Anime Recommendation System
 
-A collaborative filtering recommendation system for anime using the [TensorRec](https://github.com/jfkirk/tensorrec) framework.
+Because "just watch whatever" is not a personality.
+
+This project builds a recommendation engine that actually understands your taste — not just what's trending, not just what has the most ratings, but what *you* are likely to enjoy based on your history and the patterns of people who watch like you.
+
+## What it does
+
+Takes 7.8 million user–anime interactions and figures out who should watch what next. Starts simple, gets smarter.
 
 ## Project Structure
 
 ```
 ├── data/
-│   ├── raw/          # Original rating.csv and anime.csv (not tracked in git)
-│   └── processed/    # Cleaned and merged outputs
+│   ├── raw/          # Original datasets (not tracked — too big, too raw)
+│   └── processed/    # Cleaned, split, and matrix-ready artefacts
 ├── notebooks/
-│   ├── 01_eda.ipynb              # Exploratory data analysis
-│   ├── 02_preprocessing.ipynb    # Data merging and feature engineering
-│   └── 03_modelling.ipynb        # Model training and evaluation
+│   ├── 01_eda.ipynb              # Getting to know the data
+│   ├── 02_preprocessing.ipynb    # Making it model-ready
+│   └── 03_modelling.ipynb        # Where the magic happens
 ├── src/
-│   ├── data.py       # Data loading, merging, train/test split
+│   ├── data.py       # Load, clean, merge, split
 │   ├── features.py   # Sparse matrix construction
-│   └── model.py      # TensorRec model build, train, evaluate
+│   └── model.py      # Baselines through advanced models
 ├── tests/
 │   └── test_data.py
 ├── requirements.txt
@@ -28,15 +34,10 @@ A collaborative filtering recommendation system for anime using the [TensorRec](
 pip install -r requirements.txt
 ```
 
-Place `rating.csv` and `anime.csv` in `data/raw/` before running notebooks.
+Download the data from [Kaggle](https://www.kaggle.com/CooperUnion/anime-recommendations-database) and place `rating.csv` and `anime.csv` in `data/raw/`.
 
-## Data
+## The Data
 
-- **rating.csv** — user–anime ratings from [MyAnimeList dataset on Kaggle](https://www.kaggle.com/CooperUnion/anime-recommendations-database)
-- **anime.csv** — anime metadata (name, genre, type, episodes, rating, members)
-
-## References
-
-- [TensorRec GitHub](https://github.com/jfkirk/tensorrec)
-- [A Recommendation Engine Framework in TensorFlow](https://medium.com/hackernoon/tensorrec-a-recommendation-engine-framework-in-tensorflow-d85e4f0874e8)
-- [Getting Started with Recommender Systems and TensorRec](https://towardsdatascience.com/getting-started-with-recommender-systems-and-tensorrec-8f50a9943eef)
+- **7.8M interactions** between users and anime titles
+- **12,294 anime** with genre, type, episode count, and community ratings
+- Source: [MyAnimeList via Kaggle](https://www.kaggle.com/CooperUnion/anime-recommendations-database)
