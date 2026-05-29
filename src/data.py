@@ -28,9 +28,15 @@ def clean_anime(anime: pd.DataFrame) -> pd.DataFrame:
 
 
 def reindex(ratings: pd.DataFrame):
-    """Remap user_id and anime_id to contiguous 0-based integer indices."""
-    user_map = {uid: idx for idx, uid in enumerate(ratings["user_id"].unique())}
-    item_map = {aid: idx for idx, aid in enumerate(ratings["anime_id"].unique())}
+    """Remap user_id and anime_id to contiguous 0-based integer indices.
+
+    IDs are sorted before mapping so the index assignment is deterministic
+    regardless of row order in the input DataFrame. Without sorting, the
+    mapping depends on which user/anime appears first, making saved models
+    incompatible with feature matrices rebuilt from a differently-ordered file.
+    """
+    user_map = {uid: idx for idx, uid in enumerate(sorted(ratings["user_id"].unique()))}
+    item_map = {aid: idx for idx, aid in enumerate(sorted(ratings["anime_id"].unique()))}
     ratings = ratings.copy()
     ratings["user_idx"] = ratings["user_id"].map(user_map)
     ratings["item_idx"] = ratings["anime_id"].map(item_map)
