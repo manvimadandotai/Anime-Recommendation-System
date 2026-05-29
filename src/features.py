@@ -1,12 +1,11 @@
-import numpy as np
 import pandas as pd
 from scipy import sparse
 
 
 def build_sparse_interactions(dataset: pd.DataFrame, n_users: int, n_items: int) -> sparse.coo_matrix:
-    user_ids = dataset["user_id"].values
-    item_ids = dataset["anime_id"].values
-    ratings = dataset["rating"].values
+    user_ids = dataset["user_idx"].values
+    item_ids = dataset["item_idx"].values
+    ratings = dataset["rating_x"].values
     return sparse.coo_matrix((ratings, (user_ids, item_ids)), shape=(n_users, n_items))
 
 
