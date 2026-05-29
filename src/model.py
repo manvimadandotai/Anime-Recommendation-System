@@ -3,7 +3,7 @@ import pandas as pd
 from scipy import sparse
 from scipy.sparse.linalg import svds
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics.pairwise import cosine_similarity
+
 
 
 # ── Evaluation ────────────────────────────────────────────────────────────────

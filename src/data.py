@@ -41,6 +41,32 @@ def merge_datasets(ratings: pd.DataFrame, anime: pd.DataFrame) -> pd.DataFrame:
     return pd.merge(ratings, anime, on="anime_id", how="left")
 
 
-def train_test_split(dataset: pd.DataFrame, train_ratio: float = 0.75):
-    cutoff = int(train_ratio * len(dataset))
-    return dataset[:cutoff].copy(), dataset[cutoff:].copy()
+def train_val_test_split(
+    dataset: pd.DataFrame,
+    train_ratio: float = 0.70,
+    val_ratio: float = 0.15,
+    random_state: int = 42,
+):
+    """
+    Split dataset into train, validation, and test sets.
+
+    Shuffles before splitting so the cut is not biased by row order
+    (the raw data is sorted by user_id, so an unshuffled split would put
+    some users entirely in train and others entirely in test).
+
+    The fixed random_state ensures the same split every run, which is
+    required for reproducible model comparisons.
+
+    Ratios: 70% train / 15% val / 15% test (industry standard for rating prediction).
+    - Train  — used to fit all models
+    - Val    — used to tune hyperparameters (pick k for SVD, reg for bias model, etc.)
+    - Test   — touched only once at the end to report final numbers
+    """
+    dataset = dataset.sample(frac=1, random_state=random_state).reset_index(drop=True)
+    n = len(dataset)
+    train_end = int(train_ratio * n)
+    val_end = train_end + int(val_ratio * n)
+    train = dataset[:train_end].copy()
+    val   = dataset[train_end:val_end].copy()
+    test  = dataset[val_end:].copy()
+    return train, val, test
