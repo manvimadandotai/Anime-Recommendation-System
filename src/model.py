@@ -162,12 +162,16 @@ class SVDModel:
         u = test["user_idx"].values
         i = test["item_idx"].values
 
-        # Dot product of user and item latent vectors = collaborative signal
-        cf_score = np.array([
-            self.U[uu] @ self.Vt[:, ii]
-            if uu < self.n_users and ii < self.n_items else 0.0
-            for uu, ii in zip(u, i)
-        ])
+        # Clamp out-of-range indices so we can do vectorised fancy indexing safely,
+        # then zero out those positions with a mask afterward.
+        # This replaces the original Python list comprehension (O(n) interpreted loop)
+        # with a single batched einsum — orders of magnitude faster on large test sets.
+        oob = (u >= self.n_users) | (i >= self.n_items)
+        u_safe = np.clip(u, 0, self.n_users - 1)
+        i_safe = np.clip(i, 0, self.n_items - 1)
+
+        cf_score = np.einsum("ij,ij->i", self.U[u_safe], self.Vt[:, i_safe].T)
+        cf_score[oob] = 0.0
 
         # Add back the bias terms — final prediction is bias + latent signal
         bias_preds = self._bias.predict(test)
