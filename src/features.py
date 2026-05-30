@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from sklearn.preprocessing import MinMaxScaler
+
+
+def _minmax(arr: np.ndarray) -> np.ndarray:
+    """Normalise a 1-D array to [0, 1]; returns zeros if range is zero."""
+    lo, hi = arr.min(), arr.max()
+    return (arr - lo) / (hi - lo) if hi > lo else np.zeros_like(arr, dtype=float)
 
 
 def build_sparse_interactions(dataset: pd.DataFrame, n_users: int, n_items: int) -> sparse.coo_matrix:
@@ -55,22 +60,11 @@ def build_item_content_features(anime: pd.DataFrame, item_map: dict) -> np.ndarr
 
     # --- Numeric features: log-scale then normalise to [0, 1] ---
     # Log-scale tames the huge range in episodes (1–1818) and members (5–1M).
-    # Each feature gets its own scaler instance so the fitted min/max for
-    # episodes, rating, and members are all preserved independently. A single
-    # reused scaler would overwrite its state on each fit_transform call,
-    # leaving only the last column's range — wrong scaling at inference time.
-    ep_scaler  = MinMaxScaler()
-    rat_scaler = MinMaxScaler()
-    mem_scaler = MinMaxScaler()
-    anime["feat_episodes"] = ep_scaler.fit_transform(
-        np.log1p(anime["episodes"].values).reshape(-1, 1)
-    )
-    anime["feat_rating"] = rat_scaler.fit_transform(
-        anime["rating"].values.reshape(-1, 1)
-    )
-    anime["feat_members"] = mem_scaler.fit_transform(
-        np.log1p(anime["members"].values).reshape(-1, 1)
-    )
+    # Each numeric feature is independently normalised to [0, 1] so no single
+    # feature dominates cosine similarity calculations.
+    anime["feat_episodes"] = _minmax(np.log1p(anime["episodes"].values))
+    anime["feat_rating"]   = _minmax(anime["rating"].values)
+    anime["feat_members"]  = _minmax(np.log1p(anime["members"].values))
 
     # --- Assemble feature columns ---
     genre_cols = [f"genre_{g}" for g in all_genres]

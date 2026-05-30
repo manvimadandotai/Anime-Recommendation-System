@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from scipy.sparse.linalg import svds
-from sklearn.metrics import mean_squared_error
 
+
+def mean_squared_error(y_true, y_pred):
+    return np.mean((np.asarray(y_true) - np.asarray(y_pred)) ** 2)
 
 
 # ── Evaluation ────────────────────────────────────────────────────────────────
