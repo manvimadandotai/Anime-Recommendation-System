@@ -28,6 +28,35 @@ Takes 7.8 million user–anime interactions and figures out who should watch wha
 └── README.md
 ```
 
+## Quickstart — Run the Recommender
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Download the data from Kaggle and place the files here:
+#    data/raw/rating.csv
+#    data/raw/anime.csv
+#    (link below under "The Data")
+
+# 3. Run the preprocessing pipeline to generate the processed artefacts
+jupyter nbconvert --to notebook --execute --inplace notebooks/02_preprocessing.ipynb
+
+# 4. Launch the app
+streamlit run app.py
+```
+
+Open `http://localhost:8501` in your browser. Search for anime you've watched, rate them, and get instant personalised recommendations.
+
+## How the App Works
+
+1. **Search** for any anime by name from the full 12k catalogue
+2. **Rate** it 1–10 — higher ratings pull your taste profile more strongly toward that anime's features
+3. **Add more** to refine your profile — the recommendations update in real time
+4. **Get your top picks** — ranked by how closely they match the genre, type, and style of what you've liked
+
+No account needed. No training required. Your taste profile is built on the fly from whatever you add.
+
 ## Setup
 
 ```bash
